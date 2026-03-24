@@ -1,0 +1,16 @@
+const express = require('express');
+const router = express.Router();
+const c = require('../controllers/testController');
+const { protect, authorize } = require('../middleware/auth');
+router.use(protect);
+router.get('/my', c.getMyTests);
+router.get('/', authorize('admin', 'superadmin', 'teacher'), c.getAllTests);
+router.post('/', authorize('admin', 'superadmin', 'teacher'), c.createTest);
+router.get('/:id', c.getTestById);
+router.put('/:id', authorize('admin', 'superadmin', 'teacher'), c.updateTest);
+router.delete('/:id', authorize('admin', 'superadmin'), c.deleteTest);
+router.post('/:id/start', authorize('student'), c.startTest);
+router.post('/:id/submit', authorize('student'), c.submitTest);
+router.get('/:id/results', authorize('admin', 'superadmin', 'teacher'), c.getTestResults);
+router.get('/:id/my-result', authorize('student'), c.getMyTestResult);
+module.exports = router;
