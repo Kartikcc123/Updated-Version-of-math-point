@@ -26,9 +26,19 @@ methods: ["GET", "POST"]
 // Connect DB
 connectDB();
 
-// 🔥 FINAL CORS (WORKING)
-app.use(cors());
-app.options("*", cors());
+// 🔥 CORS Configuration for Render.com
+const corsOptions = {
+  origin: [
+    'https://updated-version-of-math-point-1.onrender.com',
+    'https://updated-version-of-math-point.onrender.com'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 // Middleware
 app.use(express.json());
