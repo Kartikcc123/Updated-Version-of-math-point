@@ -30,7 +30,6 @@ connectDB();
 const corsOptions = {
   origin: [
     'https://updated-version-of-math-point-1.onrender.com',
-    'https://updated-version-of-math-point.onrender.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
