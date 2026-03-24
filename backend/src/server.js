@@ -1,5 +1,6 @@
 require('dotenv').config();
 require('express-async-errors');
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
@@ -7,32 +8,65 @@ const fileUpload = require('express-fileupload');
 const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
+
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/error');
 
 const app = express();
 const server = http.createServer(app);
+
+// 🔥 Allowed origins
+const allowedOrigins = [
+"http://localhost:5173",
+"https://updated-version-of-math-point-1.onrender.com"
+];
+
+// 🔥 Socket.io setup
 const io = new Server(server, {
-  cors: { origin: process.env.CLIENT_URL || 'https://updated-version-of-math-point-1.onrender.com', methods: ['GET', 'POST'] },
+cors: {
+origin: allowedOrigins,
+methods: ["GET", "POST"]
+}
 });
 
 // Connect DB
 connectDB();
 
+// 🔥 CORS (FINAL FIX)
+app.use(cors({
+origin: function (origin, callback) {
+if (!origin || allowedOrigins.includes(origin)) {
+callback(null, true);
+} else {
+callback(new Error("CORS not allowed"));
+}
+},
+credentials: true,
+methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+allowedHeaders: ["Content-Type", "Authorization"]
+}));
+
+app.options("*", cors()); // 🔥 Preflight fix
+
 // Middleware
-app.use(cors({ origin: process.env.CLIENT_URL || 'https://updated-version-of-math-point-1.onrender.com', credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
-app.use(fileUpload({ createParentPath: true, limits: { fileSize: 50 * 1024 * 1024 } }));
+app.use(fileUpload({
+createParentPath: true,
+limits: { fileSize: 50 * 1024 * 1024 }
+}));
+
+// Static folder
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Socket.io for real-time
+// 🔥 Socket.io events
 io.on('connection', (socket) => {
-  socket.on('join', (userId) => socket.join(userId));
-  socket.on('joinRoom', (room) => socket.join(room));
-  socket.on('disconnect', () => {});
+socket.on('join', (userId) => socket.join(userId));
+socket.on('joinRoom', (room) => socket.join(room));
+socket.on('disconnect', () => {});
 });
+
 app.set('io', io);
 
 // Routes
@@ -49,14 +83,15 @@ app.use('/api/doubts', require('./routes/doubts'));
 app.use('/api/analytics', require('./routes/analytics'));
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'Math Point API is running 🚀' }));
+app.get('/api/health', (req, res) => {
+res.json({ status: 'ok', message: 'Math Point API is running 🚀' });
+});
 
 // Error handler
 app.use(errorHandler);
 
+// Server start
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`\n🚀 Math Point Server running on port ${PORT}`);
-  console.log(`📚 API: http://localhost:${PORT}/api`);
-  console.log(`🌐 Env: ${process.env.NODE_ENV}`);
+console.log(`\n🚀 Server running on port ${PORT}`);
 });
